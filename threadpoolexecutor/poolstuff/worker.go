@@ -30,14 +30,13 @@ func (w *worker) Process(work Work){
 }
 
 func (w *worker) Start() {
-	fmt.Println("Starting Worker ", w.id)
-	w.done.Add(1)
+	fmt.Println("Starting Worker 🤖 ", w.id)
 	go func() { // All you need is the keyword 'go' to spawn a thread :)
 		for {
 			w.readyPool <- w.work // Submit the worker's channel to boss
 			select {
 				case work := <- w.work: // If the boss has assigned work for you
-					fmt.Println("WORKER :", w.id)
+					fmt.Println("[WORKER 🤖] : Got your work boss", w.id)
 					w.Process(work)
 			}
 		}
