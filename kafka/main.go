@@ -3,44 +3,36 @@ package main
 import (
 	"fmt"
 	"kafka-use/threadpool"
-	"kafka-use/topic"
-	"os"
-	"strconv"
 	"sync"
 	"time"
+	"os"
 )
 
 var (
-	t  topic.Topic
-	tp *threadpool.Pool
+	tp          *threadpool.Pool
+	fw          threadpool.FileWorker
+	FILECOUNT   int
+	WORKERCOUNT int
 )
-
+var mainfile os.File
 func main() {
+	FILECOUNT = 3
+	WORKERCOUNT = 3
+	
 	startTime := time.Now()
 	wg := &sync.WaitGroup{}
-	for i := 0; i < 3; i++ {
+	for i := 0; i < FILECOUNT; i++ {
 		wg.Add(1)
-		go createFile(i, wg)
+		fmt.Println("Creating File ", i+1)
+		go fw.CreateFile(i+1, wg)
 	}
 	wg.Wait()
-	// _ = t.CreateTopic("MyNewTopic")
-	tp = threadpool.NewPool(3, 10)
+	fmt.Printf("%v files created in %v \n", FILECOUNT, time.Since(startTime))
+	fmt.Printf("Creating A Worker Pool of %v Workers \n", WORKERCOUNT)
+	tp = threadpool.NewPool(WORKERCOUNT, 10)
 	tp.StartWorkers()
 	go tp.Start()
 	tp.SubmitWorkToBoss()
-	tp.Wg.Wait()
-	fmt.Println(time.Since(startTime))
-}
+	tp.WorkSubmitWg.Wait()
 
-func createFile(index int, wg *sync.WaitGroup) {
-	defer wg.Done()
-	stridx := strconv.Itoa(index + 1)
-	file, err := os.Create("topic" + stridx + ".txt")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	for i := 0; i < 100000; i++ {
-		_,_ = file.WriteString("topic" + stridx + ":" + strconv.Itoa(i+1)+"\n")
-	}
 }
