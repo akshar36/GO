@@ -10,38 +10,50 @@ type Channels struct {
 	WorkerFileChannel       chan any
 	SharedChan              chan any
 	ProcessFileChannel      chan any
-	ChildWorkerReceiverChan chan any
-	ChildWorkerSenderChan   chan any
+	ChildWorkerReceiverChan chan MsgStruct
+	ChildWorkerSenderChan   chan KafkaArray
 }
-type SharedPool struct {
-	ReadyPool       chan chan any
+type Pools struct {
 	ProcessFilePool chan chan any
+	kWriterPool     chan chan KafkaArray
 }
-type Worker struct {
-	Id          int
+
+type KafkaWorker struct {
+	id          int
+	kChannel    chan KafkaArray
+	kWriterPool chan chan KafkaArray
 	Wg          *sync.WaitGroup
-	WorkerQueue []int
-	Channel     Channels
-	pool        SharedPool
-	miniWorkers []Worker
+}
+
+type Worker struct {
+	Id              int
+	Wg              *sync.WaitGroup
+	Channel         Channels
+	pool            Pools
+	miniWorkers     []Worker
+	miniWorkerCount int
+	GlobalIndex     int
+	mu *sync.Mutex
 }
 
 type Pool struct {
 	Workers      []*Worker
+	KafkaWorkers []KafkaWorker
 	Wg           *sync.WaitGroup
 	WorkSubmitWg *sync.WaitGroup
-	Pm           *sync.Mutex
 	Channel      Channels
-	pool         SharedPool
+	pool         Pools
 	ResultMap    map[int][]kafka.Message
 }
 
 type MsgStruct struct {
-	id  string
-	msg string
+	parentWorkerId int
+	id             int
+	msg            []byte
 }
 
-type KafkaStruct struct {
-	id  string
-	msg kafka.Message
+type KafkaArray struct {
+	parentWorkerId int
+	id             int
+	msg            []kafka.Message
 }
